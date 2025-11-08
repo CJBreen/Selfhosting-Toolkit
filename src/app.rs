@@ -64,10 +64,14 @@ impl eframe::App for TemplateApp {
                 egui::widgets::global_theme_preference_buttons(ui);
             });
         });
+        egui::SidePanel::left("quick_apps_panel").show(ctx, |ui| {
+            ui.separator();
+            ui.label("apps will go here");
+        });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("eframe template");
+            ui.heading("gui alpha v.0.1");
 
             ui.horizontal(|ui| {
                 ui.label("Write something: ");
@@ -79,12 +83,6 @@ impl eframe::App for TemplateApp {
                 self.value += 1.0;
             }
 
-            ui.separator();
-
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/main/",
-                "Source code."
-            ));
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                 powered_by_egui_and_eframe(ui);
@@ -93,6 +91,15 @@ impl eframe::App for TemplateApp {
         });
     }
 }
+
+fn sidebarWidget(ui: &mut egui::Ui) {
+ui.horizontal(|ui| {
+
+
+});
+
+}
+
 
 fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
