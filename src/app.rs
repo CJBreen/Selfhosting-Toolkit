@@ -1,9 +1,7 @@
 use egui::Align2;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
-use egui_toast;
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 use std::default::Default;
-use std::process::Command;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -81,7 +79,7 @@ impl PrototypeUI {
 
 
                             if ui.label("which docker").clicked() {
-                                ui.ctx().copy_text("which docker".to_string()); //copy text to clipboard
+                                ui.ctx().copy_text("which docker".to_owned()); //copy text to clipboard
                                 let mut toasts = Toasts::new()
                                     .anchor(Align2::RIGHT_TOP, [10.0, 10.0])
                                     .direction(egui::Direction::TopDown);
@@ -113,7 +111,7 @@ impl PrototypeUI {
 
                             //convenience script to copy
                             if ui.label("'curl -fsSL https://get.docker.com | sudo sh'").clicked() {
-                                ui.ctx().copy_text("curl -fsSL https://get.docker.com | sudo sh".to_string());
+                                ui.ctx().copy_text("curl -fsSL https://get.docker.com | sudo sh".to_owned());
                             }
 
 
@@ -185,18 +183,17 @@ impl PrototypeUI {
                             ui.label("Now, we can run the service using this command:");
                             ui.separator();
                             if ui.label("docker compose up -d").clicked() {
-                                ui.ctx().copy_text("docker compose up".to_string());
+                                ui.ctx().copy_text("docker compose up".to_owned());
                             }
                             ui.separator();
                             ui.add_space(20.0);
                             ui.label("Now that it is running, you can go to:");
                             ui.separator();
                             if ui.label("https://localhost::8443").clicked() {
-                                ui.ctx().copy_text("https://localhost:8443".to_string());
+                                ui.ctx().copy_text("https://localhost:8443".to_owned());
                             }
                             ui.separator();
                             ui.label("And finish setting up Nextcloud!");
-
 
 
 
@@ -205,10 +202,6 @@ impl PrototypeUI {
                         ui.collapsing("Automatic Installation", |ui| {
                             ui.label("If you wish to use an automatic install, you can use this script to automatically configure a local installation of Nextcloud");
                             if ui.button("Automatic Installation Script").clicked() {
-                                Command::new("sh")
-                                .arg("kitty")
-                                .spawn()
-                                .expect("failed to execute automatic install");
                             };
                         })
 
@@ -242,7 +235,7 @@ impl eframe::App for PrototypeUI {
                 // NOTE: no File->Quit on web pages!
                 let is_web = cfg!(target_arch = "wasm32");
                 if !is_web {
-                    ui.menu_button("File", |ui| {
+                    ui.menu_button("Options", |ui| {
                         if ui.button("Quit").clicked() {
                             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                         }
@@ -271,6 +264,7 @@ impl eframe::App for PrototypeUI {
             }
 
         });
+        //if true, open up the nextcloud installation guide window
         if self.show_nextcloud_viewport {
             self.show_guide(ctx);
         }
