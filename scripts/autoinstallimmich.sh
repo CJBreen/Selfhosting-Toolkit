@@ -3,14 +3,14 @@
 echo Installing Nextcloud...
 sleep 1
 echo Nextcloud will be installed by default in your home directory.
-echo Would you like to choose a name for the folder? Leave blank for the default and press [ENTER]
+echo Would you like to choose a name for the folder? Leave blank for the default and press [ENTER]:
 # get the user input
 read location
 
 # if they leave it blank
 if [[ ${#location} == 0 ]]; then
   echo Installing to SelfService/Nextcloud
-  rootdir="~/SelfService"
+  rootdir="/home/cbreen/SelfService"
   sleep .5
   if [[ -d "$rootdir" ]]; then
     echo SelfService folder exists. Creating Nextcloud Folder.
@@ -37,4 +37,16 @@ fi
 
 # downloading the docker file
 echo Downloading Nextcloud AllInOne docker file...
+curl https://raw.githubusercontent.com/CJBreen/Selfhosting-Toolkit/refs/heads/main/docker/compose.yaml -o ~/SelfService/Nextcloud/compose.yaml
 sleep 1.5
+echo Done.
+
+# running the docker file itself
+printf "Would you like to start up Nextcloud? [y/n] "
+read answer
+if [[ "$answer" != "${answer#[Yy]}" ]]; then
+  docker compose -f ~/SelfService/Nextcloud/compose.yaml up -d
+  echo Access Nextcloud by typing "localhost::8443" in a web browser.
+else
+  echo Exiting...
+fi
