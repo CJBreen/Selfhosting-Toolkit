@@ -1,2 +1,40 @@
 #!/usr/bin/bash
-echo hello
+
+echo Installing Nextcloud...
+sleep 1
+echo Nextcloud will be installed by default in your home directory.
+echo Would you like to choose a name for the folder? Leave blank for the default and press [ENTER]
+# get the user input
+read location
+
+# if they leave it blank
+if [[ ${#location} == 0 ]]; then
+  echo Installing to SelfService/Nextcloud
+  rootdir="~/SelfService"
+  sleep .5
+  if [[ -d "$rootdir" ]]; then
+    echo SelfService folder exists. Creating Nextcloud Folder.
+    mkdir ~/SelfService/Nextcloud
+    sleep .5
+    echo Done.
+  else
+    mkdir ~/SelfService
+    mkdir ~/SelfService/Nextcloud
+    echo Created "SelfService/Nextcloud"
+  fi
+
+  # if they specify a location for the installation path
+else
+  echo Installing to $location/Nextcloud
+  if [[ -d "$location" ]]; then
+    mkdir ~/$location/Nextcloud
+  else
+    echo $location does not exist. Creating...
+    sleep .5
+  fi
+
+fi
+
+# downloading the docker file
+echo Downloading Nextcloud AllInOne docker file...
+sleep 1.5
