@@ -2,23 +2,26 @@ use egui::Align2;
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 use egui_toast::{Toast, ToastKind, ToastOptions, Toasts};
 use std::default::Default;
-
+use sheller::try_run;
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 #[derive(Default)]
-pub struct PrototypeUI {
+pub struct SelfhostingToolkit {
     name: String,
     desc: String,
     #[serde(skip)] // disable auto-serialization
     value: f32,
     show_nextcloud_viewport: bool,
+    show_immich_viewport: bool,
     _temp_value: usize,
     _title: String,
     _text: String,
 }
 
 
-impl PrototypeUI {
+
+
+impl SelfhostingToolkit {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
 
@@ -33,8 +36,137 @@ impl PrototypeUI {
         }
 
     }
+
+
+    //show the immich install guide
+    pub fn show_immich_guide(&mut self, ctx: &egui::Context) {
+        ctx.show_viewport_immediate(
+            egui::ViewportId::from_hash_of("immediate_viewport"),
+            egui::ViewportBuilder::default()
+            .with_title("immediate_viewport")
+            .with_inner_size([500.0 ,500.0]),
+            |ctx, class| {
+                assert!(
+                    class == egui::ViewportClass::Immediate,
+                    "This backend only supports one viewport."
+                    );
+                //Top panel for immich window settings
+                egui::TopBottomPanel::top("top_panel_immich").show(ctx, |ui| {
+                    egui::MenuBar::new().ui(ui, |ui| {
+                        let is_web = cfg!(target_arch = "wasm32");
+                        if !is_web {
+                            ui.menu_button("Options", |ui| {
+                                if ui.button("Quit").clicked() {
+                                    self.show_immich_viewport = false;
+                                }
+                            });
+                            ui.add_space(16.0);
+                        }
+                    });
+                });
+                egui::SidePanel::left("installation_method").show(ctx, |_ui| {
+
+                });
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.heading("Installation Guide");
+                        ui.heading("Tip: you can click any command to copy it.");
+                        ui.add_space(20.0);
+                        self._title = String::from("Manual Installation");
+
+                        //Docker setup 
+                        ui.collapsing(self._title.clone(), |ui| {
+                            ui.label("Step 1: Set up Docker");
+                            ui.label("If you have Docker installed, we can skip this step!");
+                            ui.add_space(10.0);
+                            ui.separator();
+
+                            //clickable command, shows toast for confirmation
+                            if ui.label("which docker").clicked() {
+                                ui.ctx().copy_text("which docker".to_owned()); //copy text 
+                            }
+                            ui.separator();
+
+                            ui.collapsing("Explanation of Command", |ui| {
+                                ui.label("This command finds what instance of docker is installed.");
+                                ui.label("If it returns an output, you have it installed and can go to step 2");
+                                ui.label("IF it does not return anything, continue with this step.");
+                            });
+                            ui.add_space(10.0);
+                            
+                            ui.label("If you do not have docker installed, we can use a simple script to install it!");
+                            ui.label("Open up your terminal and paste this command.");
+                            ui.separator();
+
+                            //convenience script to copy
+                            if ui.label("'curl -fsSL https://get.docker.com | sudo sh'").clicked() {
+                                ui.ctx().copy_text("curl -fsSL https://get.docker.com | sudo sh".to_owned());
+                            }
+
+
+                            ui.separator();
+                            ui.collapsing("Explanation of command", |ui| {
+                                ui.label("This command will pull the docker convenience script and run it.");
+                                ui.label("If this failed, it means you do not have curl installed.");
+                                ui.label("Simply install 'curl' with your distribution's package manager.");
+
+
+                            });
+                            ui.add_space(20.0);
+                            ui.label("Step 2: Install Compose and Enable Services");
+                            ui.label("Next, we need to install Docker Compose. This will let us store all configuration into one file.");
+                            ui.label("Simply install it with your package manager.");
+                            ui.add_space(10.0);
+
+                            ui.label("Next, we need to enable the services.");
+                            ui.label("Use this command to enable it. Keep in mind you need to will need your sudo password.");
+                            ui.add_space(10.0);
+                            ui.separator();
+                            if ui.label("sudo systemctl enable --now docker.service \n sudo systemctl enable --now containerd.service").clicked() {
+                                ui.ctx().copy_text("sudo systemctl enable --now docker.service \n sudo systemctl enable --now containerd.service".to_owned());
+                            }
+                            ui.separator();
+
+                            ui.add_space(20.0);
+                            ui.label("Installing the Immich files");
+                            ui.label("Create a folder to store the files for Immich.");
+                            ui.label("Next, simply copy the 2 commands to get both the yaml and environment file.");
+                            ui.add_space(10.0);
+                            ui.separator();
+                            if ui.label("wget -O docker-compose.yml https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml").clicked() {
+                                ui.ctx().copy_text("wget -O docker-compose.yml https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml".to_owned());
+
+                            }
+                            if ui.label("wget -O .env https://github.com/immich-app/immich/releases/latest/download/example.env").clicked() {
+                                ui.ctx().copy_text("wget -O .env https://github.com/immich-app/immich/releases/latest/download/example.env".to_owned());
+                            }
+                            ui.separator();
+                            ui.add_space(10.0);
+                            ui.label("Be sure to go into the .env file and specify locations and timezones before proceeding.");
+                            ui.label("Simply change the UPLOAD_LOCATION and DB_PASSWORD values accordingly");
+                            ui.add_space(20.0);
+
+                        });
+                        ui.collapsing("Automatic Installation", |ui|{
+                            ui.label("If you wish to automatically install this service, you can click here to run the installation script.");
+                            if ui.button("Automatic Installation Script").clicked() {
+                                try_run!("bash /home/cbreen/SelfhostingToolkit/scripts/autoinstallimmich.sh");
+                            }
+
+                        });
+
+                if ctx.input(|i| i.viewport().close_requested()) {
+                    self.show_immich_viewport = false;
+                }
+                    })
+                })
+            }
+            );
+    }
+
+
     //show the nextcloud installation guide
-    pub fn show_guide(&mut self, ctx: &egui::Context) {
+    pub fn show_nextcloud_guide(&mut self, ctx: &egui::Context) {
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),
             egui::ViewportBuilder::default()
@@ -52,7 +184,7 @@ impl PrototypeUI {
                         let is_web = cfg!(target_arch = "wasm32");
                         if !is_web {
                             ui.menu_button("Options", |ui| {
-                                if ui.button("Quit").clicked() {
+                                if ui.button("Close").clicked() {
                                     self.show_nextcloud_viewport = false;
                                 }
                             });
@@ -134,7 +266,7 @@ impl PrototypeUI {
                             ui.add_space(10.0);
                             ui.separator();
                             if ui.label("sudo systemctl enable --now docker.service \n sudo systemctl enable --now containerd.service").clicked() {
-                                ui.ctx().copy_text("sudo systemctl enable --now docker.service \n sudo systemctl enable --now containerd.service".to_string());
+                                ui.ctx().copy_text("sudo systemctl enable --now docker.service \n sudo systemctl enable --now containerd.service".to_owned());
                             }
                             ui.separator();
 
@@ -161,7 +293,7 @@ impl PrototypeUI {
                                                         image: ghcr.io/nextcloud-releases/all-in-one:latest
                                                            init: true
                                                            restart: always
-                                                           container_name: nextcloud-aio-mastercontainer
+                                                           container_mmand execute scriptname: nextcloud-aio-mastercontainer
                                                            volumes:
                                                               - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
                                                               - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -202,7 +334,8 @@ impl PrototypeUI {
                         ui.collapsing("Automatic Installation", |ui| {
                             ui.label("If you wish to use an automatic install, you can use this script to automatically configure a local installation of Nextcloud");
                             if ui.button("Automatic Installation Script").clicked() {
-                            };
+                                try_run!("bash ~/SelfhostingToolkit/scripts/autoinstallnextcloud.sh");
+                            }
                         })
 
 
@@ -224,7 +357,7 @@ impl PrototypeUI {
 
 
 
-impl eframe::App for PrototypeUI {
+impl eframe::App for SelfhostingToolkit {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self,
               ctx: &egui::Context,
@@ -253,12 +386,21 @@ impl eframe::App for PrototypeUI {
                 // let mut app_name = Application::default().name;
                 // app_name = String::from("[App] Settings");
                 //opens up new window for user to be guided through nextcloud installation
+                self.show_immich_viewport = false;
                 self.show_nextcloud_viewport = true;
                 //debug to console to check viewport
                 println!("Nextcloud is working");
             }
+            //next, for the immich install window
+            if ui.button("Immich").clicked() {
+                self.show_nextcloud_viewport = false;
+                self.show_immich_viewport = true;
+                println!("Immich is working");
+            }
 
-            if ui.button("Add new Application").clicked() {
+
+            //import a new compose.yaml file!
+            if ui.button("Import new yaml file").clicked() {
                 ui.label("Button clicked");
 
             }
@@ -266,25 +408,24 @@ impl eframe::App for PrototypeUI {
         });
         //if true, open up the nextcloud installation guide window
         if self.show_nextcloud_viewport {
-            self.show_guide(ctx);
+            self.show_nextcloud_guide(ctx);
         }
+
+        //same with immich 
+        if self.show_immich_viewport {
+            self.show_immich_guide(ctx);
+        }
+
+
 
         egui::CentralPanel::default().show(ctx, |ui| {
             // central UI
             ui.vertical_centered(|ui| {
-                ui.heading("Prototype for Demonstration");
+                ui.heading("Click an application to get started!");
 
             });
             ui.separator();
 
-            //TODO: Pull compose data from yaml file and show here
-            egui::Window::new("App Details").show(ctx, |ui| {
-                ui.add_space(16.0);
-                ui.label("App Name:");
-                ui.label("IP Address:");
-                ui.label("Port:");
-                ui.label("Status:");
-            });
 
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {

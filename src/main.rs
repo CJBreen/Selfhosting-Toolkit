@@ -18,9 +18,9 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "Prototype UI",
+        "Selfhosting Toolkit",
         native_options,
-        Box::new(|cc| Ok(Box::new(gui_alpha::PrototypeUI::new(cc)))),
+        Box::new(|cc| Ok(Box::new(SelfhostingToolkit::SelfhostingToolkit::new(cc)))),
     )
 }
 
@@ -50,7 +50,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(gui_alpha::PrototypeUI::new(cc)))),
+                Box::new(|cc| Ok(Box::new(SelfhostingToolkit::SelfhostingToolkit::new(cc)))),
             )
             .await;
 

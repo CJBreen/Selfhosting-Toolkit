@@ -27,4 +27,4 @@ mod structs {
 }
 
 mod app;
-pub use app::PrototypeUI;
+pub use app::SelfhostingToolkit;
