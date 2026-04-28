@@ -99,6 +99,8 @@ read answer
 if [[ "$answer" != "${answer#[Yy]}" ]]; then
   docker compose -f ~/SelfService/Immich/compose.yaml up -d
   echo Access Immich by typing "localhost::8443" in a web browser.
+  exit 1
 else
   echo Exiting...
+  exit 1
 fi
